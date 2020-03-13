@@ -1,7 +1,9 @@
 package ofdru
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -36,11 +38,15 @@ type Product struct {
 	Price      int
 	Vat        int
 	VatPrice   int
-	TotalPrice string
+	TotalPrice int
 	FP         string
 	FD         string
 	FN         string
 	Time       string
+}
+
+type SpecialDate struct {
+	time.Time
 }
 
 func OfdRu(Inn string, Username string, Password string, baseURL string) *ofdru {
@@ -57,6 +63,29 @@ func OfdRu(Inn string, Username string, Password string, baseURL string) *ofdru 
 }
 
 func (o *ofdru) GetReceipts(date time.Time) (receipts []Receipt, err error) {
+	kkts, err := o.getKkts()
+	if err != nil {
+		return receipts, fmt.Errorf("Ошибка получения списка ККТ %v", err)
+	}
+	for _, kkt := range kkts.Data {
+		r, err := o.getReceipts(kkt.ID, date)
+		if err != nil {
+			return receipts, fmt.Errorf("Ошибка получения списка чеков по ККТ %s %v", kkt.ID, err)
+		}
+		receipts = append(receipts, r...)
+	}
 
 	return receipts, nil
+}
+
+func (i *SpecialDate) UnmarshalJSON(input []byte) error {
+	strInput := string(input)
+	strInput = strings.Trim(strInput, `"`)
+	newTime, err := time.Parse("2006-01-02T15:04:05", strInput)
+	if err != nil {
+		return fmt.Errorf("Ошибка преобразования даты %v", err)
+	}
+
+	i.Time = newTime
+	return nil
 }
