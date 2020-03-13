@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -18,11 +17,13 @@ type AccessToken struct {
 }
 
 func (o *ofdru) auth() (authToken *AccessToken, err error) {
-	data := url.Values{}
-	data.Set("Login", o.Username)
-	data.Add("Password", o.Password)
-	req, err := http.NewRequest("POST", o.baseURL+"/api/Authorization/CreateAuthToken", bytes.NewBufferString(data.Encode()))
-
+	data, _ := json.Marshal(map[string]string{
+		"Login":    o.Username,
+		"Password": o.Password,
+	})
+	req, err := http.NewRequest("POST", o.baseURL+"/api/Authorization/CreateAuthToken", bytes.NewBufferString(string(data)))
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("charset", "utf-8")
 	resp, err := o.Do(req)
 	if err != nil {
 		return nil, err

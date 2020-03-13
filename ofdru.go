@@ -18,7 +18,7 @@ type ofdru struct {
 	Inn      string
 	Username string
 	Password string
-	token    AccessToken
+	token    *AccessToken
 }
 
 type Receipt struct {
@@ -58,11 +58,16 @@ func OfdRu(Inn string, Username string, Password string, baseURL string) *ofdru 
 		Inn,
 		Username,
 		Password,
-		AccessToken{},
+		nil,
 	}
 }
 
 func (o *ofdru) GetReceipts(date time.Time) (receipts []Receipt, err error) {
+	o.token, err = o.auth()
+	if err != nil {
+		return receipts, fmt.Errorf("Ошибка авторизации %v", err)
+	}
+
 	kkts, err := o.getKkts()
 	if err != nil {
 		return receipts, fmt.Errorf("Ошибка получения списка ККТ %v", err)
