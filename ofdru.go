@@ -30,6 +30,7 @@ type Receipt struct {
 	Link     string
 	Price    int
 	VatPrice int
+	KktRegId string
 }
 
 type Product struct {

@@ -92,6 +92,7 @@ func (o *ofdru) getReceipts(kkt string, date time.Time) (receipts []Receipt, err
 		}
 
 		receipts = append(receipts, Receipt{
+			KktRegId: rec.Data.KKTRegNumber,
 			ID:       rec.Data.DocumentNumber,
 			FP:       rec.Data.FiscalSign,
 			FD:       strconv.Itoa(rec.Data.DocumentNumber),
