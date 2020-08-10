@@ -97,7 +97,7 @@ func (o *ofdru) getReceipts(kkt string, date time.Time) (receipts []Receipt, err
 			FP:       rec.Data.FiscalSign,
 			FD:       strconv.Itoa(rec.Data.DocumentNumber),
 			Date:     rec.Data.DateTime.Time.Format(time.RFC3339Nano),
-			Products: nil,
+			Products: products,
 			Link:     fmt.Sprintf("/rec/%s/%s/%s/%d/%s", o.Inn, receipt.KktRegNumber, receipt.FnNumber, receipt.DocNumber, rec.Data.DecimalFiscalSign),
 			Price:    rec.Data.AmountTotal,
 			VatPrice: rec.Data.Nds18TotalSumm,
