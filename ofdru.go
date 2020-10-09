@@ -74,7 +74,7 @@ func (o *ofdru) GetReceipts(date time.Time) (receipts []Receipt, err error) {
 		return receipts, fmt.Errorf("Ошибка получения списка ККТ %v", err)
 	}
 	for _, kkt := range kkts.Data {
-		r, err := o.getReceipts(kkt.ID, date)
+		r, err := o.getReceipts(kkt.KktRegId, date)
 		if err != nil {
 			return receipts, fmt.Errorf("Ошибка получения списка чеков по ККТ %s %v", kkt.ID, err)
 		}
