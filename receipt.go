@@ -59,7 +59,7 @@ func (o *ofdru) getReceipts(kkt string, date time.Time) ([]Receipt, error) {
 	}
 	wg.Wait()
 	close(errCh)
-	close(errCh)
+	close(ch)
 	errs := make([]string, 0)
 	for errPart := range errCh {
 		errs = append(errs, errPart.Error())
