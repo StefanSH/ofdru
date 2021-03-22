@@ -49,7 +49,7 @@ type ReceiptInformation struct {
 }
 
 func (o *ofdru) getReceipts(kkt string, date time.Time) ([]Receipt, error) {
-	var wg *sync.WaitGroup
+	wg := &sync.WaitGroup{}
 	ch := make(chan []Receipt, 24)
 	errCh := make(chan error, 24)
 
