@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
+	"sync"
 	"time"
 )
 
@@ -46,13 +48,39 @@ type ReceiptInformation struct {
 	Depth          int         `json:"Depth"`
 }
 
-func (o *ofdru) getReceipts(kkt string, date time.Time) (receipts []Receipt, err error) {
-	startDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
-	endDate := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 59, date.Location())
+func (o *ofdru) getReceipts(kkt string, date time.Time) ([]Receipt, error) {
+	var wg *sync.WaitGroup
+	ch := make(chan []Receipt, 24)
+	errCh := make(chan error, 24)
+
+	wg.Add(24)
+	for i:= 0; i < 24; i++ {
+		go o.getReceiptsInHour(wg, ch, errCh, i, kkt, date)
+	}
+	wg.Wait()
+
+	errs := make([]string, 0)
+	for errPart := range errCh {
+		errs = append(errs, errPart.Error())
+	}
+	err := fmt.Errorf(strings.Join(errs, "\n"))
+
+	receipts := make([]Receipt, 0)
+	for receiptsPart := range ch {
+		receipts = append(receipts, receiptsPart...)
+	}
+
+	return receipts, err
+}
+
+func (o *ofdru) getReceiptsInHour(wg *sync.WaitGroup, receiptCh chan []Receipt, errCh chan error, hour int, kkt string, date time.Time) {
+	defer wg.Done()
+	startDate := time.Date(date.Year(), date.Month(), date.Day(), hour, 0, 0, 0, date.Location())
+	endDate := time.Date(date.Year(), date.Month(), date.Day(), hour, 59, 59, 59, date.Location())
 	req, err := http.NewRequest("GET", o.baseURL+"/api/integration/v1/inn/"+o.Inn+"/kkt/"+kkt+"/receipts?AuthToken="+o.token.AuthToken+"&dateFrom="+startDate.Format("2006-01-02T15:04:05")+"&dateTo="+endDate.Format("2006-01-02T15:04:05"), nil)
 	resp, err := o.Do(req)
 	if err != nil {
-		return receipts, err
+		errCh <- err
 	}
 
 	defer func() {
@@ -63,17 +91,20 @@ func (o *ofdru) getReceipts(kkt string, date time.Time) (receipts []Receipt, err
 	}()
 	rs, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return receipts, fmt.Errorf("Ошибка чтения данных %v", err)
+		formatErr := fmt.Errorf("ошибка чтения данных %v с %s по %s", err, startDate, endDate)
+		errCh <- formatErr
 	}
 	var r ReceiptResult
 	if err := json.Unmarshal(rs, &r); err != nil {
-		return receipts, fmt.Errorf("Ошибка преобразованя данных %v", err)
+		formatErr := fmt.Errorf("ошибка преобразованя данных %v", err)
+		errCh <- formatErr
 	}
 
+	receipts := make([]Receipt, 0, len(r.Data))
 	for _, receipt := range r.Data {
 		rec, err := o.getReceiptRaw(receipt.ID, kkt)
 		if err != nil {
-			return receipts, err
+			errCh <- err
 		}
 		var products []Product
 		for _, item := range rec.Data.Items {
@@ -103,6 +134,5 @@ func (o *ofdru) getReceipts(kkt string, date time.Time) (receipts []Receipt, err
 			VatPrice: rec.Data.Nds18TotalSumm,
 		})
 	}
-
-	return receipts, err
+	receiptCh <- receipts
 }
