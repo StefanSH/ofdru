@@ -49,7 +49,7 @@ type ReceiptInformation struct {
 func (o *ofdru) getReceipts(kkt string, date time.Time) (receipts []Receipt, err error) {
 	startDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
 	endDate := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 59, date.Location())
-	req, err := http.NewRequest("GET", o.baseURL+"/api/integration/v1/inn/"+o.Inn+"/kkt/"+kkt+"/receipts?AuthToken="+o.token.AuthToken+"&dateFrom="+startDate.Format(time.RFC3339)+"&dateTo="+endDate.Format(time.RFC3339), nil)
+	req, err := http.NewRequest("GET", o.baseURL+"/api/integration/v1/inn/"+o.Inn+"/kkt/"+kkt+"/receipts?AuthToken="+o.token.AuthToken+"&dateFrom="+startDate.Format("2006-01-02T15:04:05")+"&dateTo="+endDate.Format("2006-01-02T15:04:05"), nil)
 	resp, err := o.Do(req)
 	if err != nil {
 		return receipts, err
