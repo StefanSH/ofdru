@@ -103,7 +103,7 @@ func (o *ofdru) getReceiptsInHour(wg *sync.WaitGroup, receiptCh chan []Receipt, 
 		rec, err := o.getReceiptRaw(receipt.ID, kkt)
 		if err != nil {
 			errCh <- err
-			return
+			continue
 		}
 		var products []Product
 		for _, item := range rec.Data.Items {
