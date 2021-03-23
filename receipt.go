@@ -3,7 +3,6 @@ package ofdru
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/logger"
 	"io/ioutil"
 	"net/http"
 	"strconv"
