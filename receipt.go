@@ -82,23 +82,21 @@ func (o *ofdru) getReceiptsInHour(wg *sync.WaitGroup, receiptCh chan []Receipt, 
 	resp, err := o.Do(req)
 	if err != nil {
 		errCh <- err
+		return
 	}
 
-	defer func() {
-		err = resp.Body.Close()
-		if err != nil {
-			logger.Error("error closing response body")
-		}
-	}()
 	rs, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		formatErr := fmt.Errorf("ошибка чтения данных %v с %s по %s", err, startDate, endDate)
 		errCh <- formatErr
+		return
 	}
+	resp.Body.Close()
 	var r ReceiptResult
 	if err := json.Unmarshal(rs, &r); err != nil {
 		formatErr := fmt.Errorf("ошибка преобразованя данных %v", err)
 		errCh <- formatErr
+		return
 	}
 
 	receipts := make([]Receipt, 0, len(r.Data))
@@ -106,6 +104,7 @@ func (o *ofdru) getReceiptsInHour(wg *sync.WaitGroup, receiptCh chan []Receipt, 
 		rec, err := o.getReceiptRaw(receipt.ID, kkt)
 		if err != nil {
 			errCh <- err
+			return
 		}
 		var products []Product
 		for _, item := range rec.Data.Items {
