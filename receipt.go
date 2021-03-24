@@ -76,7 +76,7 @@ func (o *ofdru) getReceipts(kkt string, date time.Time) ([]Receipt, error) {
 func (o *ofdru) getReceiptsInHour(wg *sync.WaitGroup, receiptCh chan []Receipt, errCh chan error, hour int, kkt string, date time.Time) {
 	defer wg.Done()
 	startDate := time.Date(date.Year(), date.Month(), date.Day(), hour, 0, 0, 0, date.Location())
-	endDate := time.Date(date.Year(), date.Month(), date.Day(), hour, 59, 59, 59, date.Location())
+	endDate := time.Date(date.Year(), date.Month(), date.Day(), hour, 59, 59, 0, date.Location())
 	req, err := http.NewRequest("GET", o.baseURL+"/api/integration/v1/inn/"+o.Inn+"/kkt/"+kkt+"/receipts?AuthToken="+o.token.AuthToken+"&dateFrom="+startDate.Format("2006-01-02T15:04:05")+"&dateTo="+endDate.Format("2006-01-02T15:04:05"), nil)
 	resp, err := o.Do(req)
 	if err != nil {
